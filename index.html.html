@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ET Practical Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #1a2235;
+    --border: #2a3550;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --accent3: #8b5cf6;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow: rgba(59,130,246,0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 16px 80px;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .header-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #1e3a5f, #1e293b);
+    border: 1px solid var(--accent);
+    color: var(--accent2);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.6rem, 5vw, 3rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #60a5fa, #06b6d4, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── LIVE DATE / WEEK BANNER ── */
+  .date-week-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #0f1f3d, #111827);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .dw-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dw-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .dw-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+  }
+  .dw-dot {
+    width: 5px; height: 5px;
+    background: var(--border);
+    border-radius: 50%;
+  }
+  .dw-week-badge {
+    background: rgba(59,130,246,0.18);
+    border: 1px solid var(--accent);
+    color: #93c5fd;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+  .dw-noweek {
+    background: rgba(100,116,139,0.15);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* ── SEARCH CARD ── */
+  .search-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-bottom: 28px;
+    box-shadow: 0 0 40px rgba(59,130,246,0.05);
+  }
+  .search-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 16px;
+  }
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 1;
+    min-width: 160px;
+  }
+  label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  input[type="text"],
+  input[type="number"],
+  select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    padding: 13px 14px;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .btn-check {
+    background: linear-gradient(135deg, var(--accent), #6366f1);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    border: none;
+    padding: 13px 26px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+    min-width: 110px;
+  }
+  .btn-check:active {
+    transform: scale(0.97);
+    box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+  }
+  @media (hover: hover) {
+    .btn-check:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(59,130,246,0.35);
+    }
+  }
+
+  /* ── RESULTS ── */
+  .result-panel {
+    display: none;
+    animation: fadeUp 0.35s ease;
+  }
+  .result-panel.visible { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .student-banner {
+    background: linear-gradient(135deg, #0f1f3d, #111827);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .s-name { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; }
+  .s-reg  { color: var(--accent2); font-size: 0.82rem; margin-top: 3px; }
+  .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.04em; }
+  .badge-group { background: rgba(139,92,246,0.2); border: 1px solid #8b5cf6; color: #c4b5fd; }
+  .badge-sub   { background: rgba(6,182,212,0.2);  border: 1px solid #06b6d4; color: #67e8f9; }
+  .badge-wrap  { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .prac-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .prac-card::before {
+    content:'';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .prac-card.blue::before   { background: #3b82f6; }
+  .prac-card.orange::before { background: #f59e0b; }
+  .prac-card.purple::before { background: #8b5cf6; }
+  .prac-card.green::before  { background: #10b981; }
+  .prac-card.teal::before   { background: #14b8a6; }
+  .prac-card.pink::before   { background: #ec4899; }
+  .prac-name { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 10px 0 6px; }
+  .prac-meta { font-size: 0.76rem; color: var(--muted); margin-bottom: 3px; }
+  .prac-meta span { color: var(--accent2); }
+
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+  .no-prac { display: none; text-align: center; padding: 40px; color: var(--muted); }
+
+  /* ── FOOTER ── */
+  .footer-credit {
+    margin-top: 56px;
+    padding: 18px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    opacity: 0.6;
+    transition: opacity 0.3s;
+  }
+  .footer-credit:hover { opacity: 1; }
+  .footer-credit p { font-size: 0.78rem; letter-spacing: 0.1em; color: var(--muted); }
+  .footer-credit .names { color: var(--accent2); font-weight: 600; font-family: 'Syne', sans-serif; }
+
+  @media (max-width: 480px) {
+    .page-wrap { padding: 28px 12px 70px; }
+    .search-row { flex-direction: column; }
+    .field-group { min-width: 100%; }
+    .btn-check { width: 100%; padding: 15px; font-size: 1rem; }
+    .schedule-grid { grid-template-columns: 1fr; }
+    .date-week-banner { gap: 10px; }
+    .dw-dot { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="header">
+    <div class="header-badge">Institute of Technology · University of Moratuwa</div>
+    <h1>Practical Schedule Checker</h1>
+    <p>Electronics &amp; Telecommunication Engineering Technology</p>
+  </div>
+
+  <div class="date-week-banner" id="dateWeekBanner"></div>
+
+  <div class="search-card">
+    <div class="search-row">
+      <div class="field-group">
+        <label>Registration Number</label>
+        <input type="text" id="regInput" placeholder="E.g. 23ET0###" maxlength="10"
+               autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div class="field-group" style="max-width:130px">
+        <label>Week Number</label>
+        <input type="number" id="weekInput" placeholder="1 – 12" min="1" max="12" inputmode="numeric">
+      </div>
+      <button class="btn-check" onclick="checkSchedule()">Check →</button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="result-panel" id="resultPanel">
+    <div class="student-banner" id="studentBanner"></div>
+    <div class="schedule-grid" id="scheduleGrid"></div>
+    <div class="no-prac" id="noPrac">
+      <div style="font-size:2rem;margin-bottom:8px">📭</div>
+      No practicals scheduled for this week.
+    </div>
+  </div>
+
+  <footer class="footer-credit">
+    <p style="font-size:0.5rem; margin-top:5px;">DESIGNED BY <span class="names">JAZLY &amp; NASLEEM</span></p>
+    <p style="font-size:0.5rem; margin-top:5px;">© 2026 ET·ITUM</p>
+  </footer>
+</div>
+
+<script>
+// --- STUDENT DATA ---
+const STUDENTS = {
+  "23ET0418": { "name": "R.P.G.Y. RAJAPAKSHA", "sub": "AX", "g": "G1" },
+  "23ET0417": { "name": "K.D.G.N.P. RAJAPAKSHA", "sub": "AX", "g": "G1" },
+  "23ET0379": { "name": "D.S.R.C.S. GUNAWARDHANA", "sub": "AX", "g": "G1" },
+  "23ET0414": { "name": "K.R.R. PREMAKUMARA", "sub": "AX", "g": "G1" },
+  "23ET0415": { "name": "J.N.P. PREMASIRI", "sub": "AX", "g": "G1" },
+  "23ET0411": { "name": "K.M.N.NIMSITH", "sub": "AX", "g": "G1" },
+  "23ET0366": { "name": "N.K.T. DILHARA", "sub": "AX", "g": "G1" },
+  "23ET0359": { "name": "P.K.M.W.S.BANDARA", "sub": "AX", "g": "G1" },
+  "23ET0365": { "name": "J.S.S. DHARMAKEERTHI", "sub": "AY", "g": "G1" },
+  "23ET0370": { "name": "D.M.H.M. DISANAYAKA", "sub": "AY", "g": "G1" },
+  "23ET0351": { "name": "P.N.W.D.T.B ABAYARATHNE", "sub": "AY", "g": "G1" },
+  "23ET0352": { "name": "A.M.I.U. ADIKARI", "sub": "AY", "g": "G1" },
+  "23ET0363": { "name": "R.C.V. DE SILVA", "sub": "AY", "g": "G2" },
+  "23ET0416": { "name": "M B PUSHPAKUMARA", "sub": "AY", "g": "G2" },
+  "23ET0429": { "name": "M.S.A.C.P.SAMARAWEERA", "sub": "AY", "g": "G2" },
+  "23ET0360": { "name": "W.P.J CHANDEEPA", "sub": "AY", "g": "G2" },
+  "23ET0413": { "name": "V.P.S PIYUMAL", "sub": "AZ", "g": "G2" },
+  "23ET0361": { "name": "V.M CHANDRARATHNE", "sub": "AZ", "g": "G2" },
+  "23ET0432": { "name": "R.M.N.I SENARATHNA", "sub": "AZ", "g": "G2" },
+  "23ET0387": { "name": "K.A.N. INDUWARA", "sub": "AZ", "g": "G2" },
+  "23ET0354": { "name": "KBLS AKALANKA", "sub": "AZ", "g": "G2" },
+  "23ET0381": { "name": "UPGSNB GUNAWARDHANA", "sub": "AZ", "g": "G2" },
+  "23ET0376": { "name": "WHDH FERNANDO", "sub": "AZ", "g": "G2" },
+  "23ET0380": { "name": "GWNM GUNAWARDHANA", "sub": "AZ", "g": "G2" },
+  "23ET0444": { "name": "WLW WICKRAMANAYAKA", "sub": "AZ", "g": "G2" },
+  "23ET0404": { "name": "K.A.P LAKSHAN", "sub": "BX", "g": "G3" },
+  "23ET0377": { "name": "M A GAYANTHA", "sub": "BX", "g": "G3" },
+  "23ET0406": { "name": "H G R MALSHAN", "sub": "BX", "g": "G3" },
+  "23ET0433": { "name": "H M B S S SUBASINGHE", "sub": "BX", "g": "G3" },
+  "23ET0392": { "name": "J.M.C.P JAYASEKARA", "sub": "BX", "g": "G3" },
+  "23ET0367": { "name": "KMRR DILSHAN", "sub": "BX", "g": "G3" },
+  "23ET0368": { "name": "MPK DILSHAN", "sub": "BX", "g": "G3" },
+  "23ET0369": { "name": "RS DILSHAN", "sub": "BX", "g": "G3" },
+  "23ET0371": { "name": "DMCN DISSANAYAKA", "sub": "BY", "g": "G3" },
+  "23ET0374": { "name": "PSA FERNANDO", "sub": "BY", "g": "G3" },
+  "23ET0399": { "name": "KAJ KAVINDA", "sub": "BY", "g": "G3" },
+  "23ET0400": { "name": "JSH KAVISHKA", "sub": "BY", "g": "G3" },
+  "23ET0401": { "name": "VTAG KULATHILAKA", "sub": "BY", "g": "G4" },
+  "23ET0402": { "name": "LDS KUMARA", "sub": "BY", "g": "G4" },
+  "23ET0396": { "name": "LHH KARUNARATHNA", "sub": "BY", "g": "G4" },
+  "23ET0407": { "name": "M.K.T.MENDIS", "sub": "BY", "g": "G4" },
+  "23ET0408": { "name": "P.G.A.L.MUNASINGHE", "sub": "BZ", "g": "G4" },
+  "23ET0403": { "name": "W.H.S.M.KUMARATHUNGA", "sub": "BZ", "g": "G4" },
+  "23ET0386": { "name": "S.H.S.L.HEWAGE", "sub": "BZ", "g": "G4" },
+  "23ET0393": { "name": "H.D.U.S.JAYASOORIYA", "sub": "BZ", "g": "G4" },
+  "23ET0373": { "name": "K.H.J FERNANDO", "sub": "BZ", "g": "G4" },
+  "23ET0364": { "name": "H.J.A.DE ZOYSA SIRIWARDANA", "sub": "BZ", "g": "G4" },
+  "23ET0375": { "name": "P.W.N.P.T.FERNANDO", "sub": "BZ", "g": "G4" },
+  "23ET0428": { "name": "B.D.A.S.SAMARANAYAKA", "sub": "BZ", "g": "G4" },
+  "23ET0447": { "name": "W.L.D.S.T.WIJETHUNGA", "sub": "BZ", "g": "G4" },
+  "23ET0448": { "name": "M.P.M.D.WIMALARATHNA", "sub": "CX", "g": "G5" },
+  "23ET0445": { "name": "H.A.H.N.WIJERATHNA", "sub": "CX", "g": "G5" },
+  "23ET0446": { "name": "K.I.WIJESINGHE", "sub": "CX", "g": "G5" },
+  "23ET0443": { "name": "J.C.WELARATHNA", "sub": "CX", "g": "G5" },
+  "23ET0450": { "name": "Y.B.U.A.YAPA", "sub": "CX", "g": "G5" },
+  "23ET0419": { "name": "A.V.RANAWAKA", "sub": "CX", "g": "G5" },
+  "23ET0425": { "name": "B.H.S.SADARUWAN", "sub": "CX", "g": "G5" },
+  "23ET0442": { "name": "D.W.M.S.A.WEERAWANNI", "sub": "CX", "g": "G5" },
+  "23ET0423": { "name": "G.M.RAVISHANKA", "sub": "CY", "g": "G5" },
+  "23ET0420": { "name": "R.P.N.S.RANDENI", "sub": "CY", "g": "G5" },
+  "23ET0362": { "name": "M.A.DANANJAYA", "sub": "CY", "g": "G5" },
+  "23ET0384": { "name": "A.H.M.D.HEMACHANDRA", "sub": "CY", "g": "G5" },
+  "23ET0410": { "name": "N.K.P.NAWAGAMUWA", "sub": "CY", "g": "G6" },
+  "23ET0412": { "name": "N.A.D.S.H.W.NIWUNHELLA", "sub": "CY", "g": "G6" },
+  "23ET0421": { "name": "R.M.O.G.RATHNAYAKE", "sub": "CY", "g": "G6" },
+  "23ET0437": { "name": "S VAKEESAN", "sub": "CY", "g": "G6" },
+  "23ET0430": { "name": "VGK SANDARUWAN", "sub": "CZ", "g": "G6" },
+  "23ET0388": { "name": "M.S.M JASLI", "sub": "CZ", "g": "G6" },
+  "23ET0431": { "name": "I.H.A SEIYAF", "sub": "CZ", "g": "G6" },
+  "23ET0395": { "name": "K KAMSIKA", "sub": "CZ", "g": "G6" },
+  "23ET0390": { "name": "HMI JAYARATHNA", "sub": "CZ", "g": "G6" },
+  "23ET0389": { "name": "JMSMB JAYAMAHA", "sub": "CZ", "g": "G6" },
+  "23ET0391": { "name": "PSHL JAYARATHNE", "sub": "CZ", "g": "G6" },
+  "23ET0383": { "name": "UHAK HASARANGA", "sub": "CZ", "g": "G6" },
+  "23ET0426": { "name": "S.A.S.SAHANSITH", "sub": "CZ", "g": "G6" },
+  "23ET0440": { "name": "K.D.S.P.WEERASINGHA", "sub": "DX", "g": "G7" },
+  "23ET0424": { "name": "H.H.G.M.RUKSHAN", "sub": "DX", "g": "G7" },
+  "23ET0439": { "name": "W.M.N.W.WARNAKULASOORIYA", "sub": "DX", "g": "G7" },
+  "23ET0438": { "name": "W.A.C.VISHMIKA", "sub": "DX", "g": "G7" },
+  "23ET0405": { "name": "H.H.C.J.MADUMALI", "sub": "DX", "g": "G7" },
+  "23ET0394": { "name": "J A C S JAYASOORIYA", "sub": "DX", "g": "G7" },
+  "23ET0378": { "name": "Y.H.GAYASHA", "sub": "DX", "g": "G7" },
+  "23ET0385": { "name": "H.M.T.T.HERATH", "sub": "DY", "g": "G7" },
+  "23ET0397": { "name": "KMNP KASTHURI", "sub": "DY", "g": "G7" },
+  "23ET0382": { "name": "H H M H R HAPUKOTUWA", "sub": "DY", "g": "G8" },
+  "23ET0409": { "name": "M.N.M NASLEEM", "sub": "DY", "g": "G8" },
+  "23ET0372": { "name": "M.N.F SAFNA", "sub": "DY", "g": "G8" },
+  "23ET0355": { "name": "H.M AMAJITH", "sub": "DY", "g": "G8" },
+  "23ET0436": { "name": "S THIRUKUMARAN", "sub": "DY", "g": "G8" },
+  "23ET0427": { "name": "K SAILAJAN", "sub": "DZ", "g": "G8" },
+  "23ET0422": { "name": "T.W.K.RAVIHANSI", "sub": "DZ", "g": "G8" },
+  "23ET0398": { "name": "W.G.A.KAUSHALYA", "sub": "DZ", "g": "G8" },
+  "23ET0441": { "name": "W.P.C.K.WEERASINGHE", "sub": "DZ", "g": "G8" },
+  "23ET0357": { "name": "T.G.N.K.ARIYAWANSHA", "sub": "DZ", "g": "G8" },
+  "23ET0435": { "name": "L.K.N.T.THATHSARANI", "sub": "DZ", "g": "G8" }
+};
+
+// --- SCHEDULE DATA ---
+const getMainGroup = sub => sub[0];
+const EI_SCHEDULE = {1:'D',2:'A',3:'C',4:'B',5:'D',6:'A',7:'C',8:'B',9:'D',10:'A',11:'C',12:'B'};
+const PS_SCHEDULE = {1:'B',2:'D',3:'A',4:'C',5:'B',6:'D',7:'A',8:'C',9:'B',10:'D',11:'A',12:'C'};
+const EM_SCHEDULE = {1:'C',2:'B',3:'D',4:'A',5:'C',6:'B',7:'D',8:'A',9:'C',10:'B',11:'D',12:'A'};
+const ES_SCHEDULE = {1:'A',2:'C',3:'B',4:'D',5:'A',6:'C',7:'B',8:'D',9:'A',10:'C',11:'B',12:'D'};
+
+const TS_SCHEDULE = {
+  1:{TS1:'AX',TS2:'AY',TS3:'AZ'},2:{TS1:'CX',TS2:'CY',TS3:'CZ'},3:{TS1:'BY',TS2:'BZ',TS3:'BX'},
+  4:{TS1:'DY',TS2:'DZ',TS3:'DX'},5:{TS1:'AZ',TS2:'BX',TS3:'BY'},6:{TS1:'CZ',TS2:'CX',TS3:'CY'},
+  7:{TS1:'BZ',TS2:'BX',TS3:'BY'},8:{TS1:'DZ',TS2:'DX',TS3:'DY'},9:{TS1:'AY',TS2:'AZ',TS3:'AX'},
+  10:{TS1:'CY',TS2:'CZ',TS3:'CX'},11:{TS1:'BY',TS2:'BZ',TS3:'BX'},12:{TS1:'DZ',TS2:'DX',TS3:'DY'}
+};
+
+// Unified CS_SCHEDULE including all 12 rotations from image
+const CS_SCHEDULE = {
+  1:{CS1:'BX',CS2:'BY',CS3:'BZ'}, 2:{CS1:'DX',CS2:'DY',CS3:'DZ'}, 3:{CS1:'AY',CS2:'AZ',CS3:'AX'},
+  4:{CS1:'CY',CS2:'CZ',CS3:'CX'}, 5:{CS1:'BZ',CS2:'AX',CS3:'AY'}, 6:{CS1:'DZ',CS2:'DX',CS3:'DY'},
+  7:{CS1:'AX',CS2:'AY',CS3:'AZ'}, 8:{CS1:'CX',CS2:'CY',CS3:'CZ'}, 9:{CS1:'BY',CS2:'BZ',CS3:'BX'},
+  10:{CS1:'DY',CS2:'DZ',CS3:'DX'},11:{CS1:'AZ',CS2:'AX',CS3:'AY'},12:{CS1:'CZ',CS2:'CX',CS3:'CY'}
+};
+
+// TRONICS_SESSIONS mapped to the CS rotation flows
+const TRONICS_SESSIONS = [
+  { label:'02 Apr 2026', groups:['G7','G8'] }, { label:'09 Apr 2026', groups:['G1','G2'] },
+  { label:'23 Apr 2026', groups:['G5','G6'] }, { label:'30 Apr 2026', groups:['G3','G4'] },
+  { label:'07 May 2026', groups:['G7','G8'] }, { label:'14 May 2026', groups:['G1','G2'] },
+  { label:'21 May 2026', groups:['G5','G6'] }, { label:'04 Jun 2026', groups:['G3','G4'] }
+];
+
+// --- ACADEMIC CALENDAR ---
+const ACAD_START = new Date('2026-03-30'); 
+
+function getCurrentWeek() {
+  const today = new Date();
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startMid = new Date(ACAD_START.getFullYear(), ACAD_START.getMonth(), ACAD_START.getDate());
+  const diffMs = todayMid - startMid;
+  if (diffMs < 0) return null; 
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const week = Math.floor(diffDays / 7) + 1;
+  return (week >= 1 && week <= 12) ? week : null;
+}
+
+function formatDate(d) {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function renderDateWeekBanner() {
+  const banner = document.getElementById('dateWeekBanner');
+  const today = new Date();
+  const dateStr = formatDate(today);
+  const week = getCurrentWeek();
+
+  let weekHtml;
+  if (week) {
+    weekHtml = `<span class="dw-week-badge">Week ${week}</span>`;
+  } else {
+    const beforeStart = today < ACAD_START;
+    weekHtml = `<span class="dw-noweek">${beforeStart ? 'Semester not started' : 'Outside semester'}</span>`;
+  }
+
+  banner.innerHTML = `
+    <div class="dw-item">
+      <span class="dw-label">Today</span>
+      <span class="dw-value">${dateStr}</span>
+    </div>
+    <div class="dw-dot"></div>
+    <div class="dw-item">
+      <span class="dw-label">Current Week</span>
+      ${weekHtml}
+    </div>`;
+}
+
+// --- SCHEDULE CHECKER ---
+function checkSchedule() {
+  const reg  = document.getElementById('regInput').value.trim().toUpperCase();
+  const week = parseInt(document.getElementById('weekInput').value);
+  const err  = document.getElementById('errorMsg');
+  const panel = document.getElementById('resultPanel');
+
+  err.classList.remove('visible');
+  panel.classList.remove('visible');
+
+  if (!STUDENTS[reg]) {
+    err.textContent = 'Registration number not found. Please check and try again.';
+    err.classList.add('visible');
+    return;
+  }
+  if (!week || week < 1 || week > 12) {
+    err.textContent = 'Please enter a valid week number between 1 and 12.';
+    err.classList.add('visible');
+    return;
+  }
+
+  const student = STUDENTS[reg];
+  const sub = student.sub;
+  const mainGrp = getMainGroup(sub);
+
+  document.getElementById('studentBanner').innerHTML = `
+    <div>
+      <div class="s-name">${student.name}</div>
+      <div class="s-reg">${reg}</div>
+    </div>
+    <div class="badge-wrap">
+      <span class="badge badge-group">Group ${mainGrp}</span>
+      <span class="badge badge-sub">${sub}</span>
+      <span class="badge badge-sub">${student.g}</span>
+    </div>`;
+
+  const cards = [];
+  if (EI_SCHEDULE[week] === mainGrp) cards.push({c:'blue',   n:'Electrical Installation', d:'Wednesday', t:'1:15 – 5:15 PM'});
+  if (PS_SCHEDULE[week] === mainGrp) cards.push({c:'orange', n:'Power System', d:'Monday', t:'8:15 – 12:15 PM'});
+  if (EM_SCHEDULE[week] === mainGrp) cards.push({c:'purple', n:'Electrical Machine', d:'Wednesday', t:'1:15 – 5:15 PM'});
+  if (ES_SCHEDULE[week] === mainGrp) cards.push({c:'green',  n:'Electronic Systems', d:'Monday', t:'8:15 – 12:15 PM'});
+  if (TS_SCHEDULE[week] === mainGrp) cards.push({c:'yellow',  n:'Telecommunication System', d:'Thursday', t:'1:15 – 5:15 PM'});
+
+  const tsWeek = TS_SCHEDULE[week] || {};
+  for (const [slot, sg] of Object.entries(tsWeek)) {
+    if (sg === sub) cards.push({c:'teal', n:'Telecommunication System',d:'Thursday', t:'1:15 – 5:15 PM'});
+  }
+
+  // Unified Control System & Tronics Flow
+  const csWeek = CS_SCHEDULE[week] || {};
+  for (const [slot, sg] of Object.entries(csWeek)) {
+    if (sg === sub) {
+      // Logic: If sub-group is in the CS rotation for this week, check which actual Date it falls on
+      const wStart = new Date(ACAD_START.getTime() + (week - 1) * 7 * 24 * 3600 * 1000);
+      const wEnd   = new Date(wStart.getTime() + 7 * 24 * 3600 * 1000);
+      
+      let assignedDate = "Check Timetable";
+      TRONICS_SESSIONS.forEach(s => {
+        const d = new Date(s.label);
+        if (d >= wStart && d < wEnd && s.groups.includes(student.g)) {
+          assignedDate = s.label;
+        }
+      });
+
+      cards.push({c:'pink', n:'Control System', d:'Thursday', t:'8:15 – 12:15 PM'});
+    }
+  }
+
+  const grid  = document.getElementById('scheduleGrid');
+  const noPrac = document.getElementById('noPrac');
+  grid.innerHTML = '';
+
+  if (cards.length === 0) {
+    noPrac.style.display = 'block';
+  } else {
+    noPrac.style.display = 'none';
+    cards.forEach(c => {
+      grid.innerHTML += `
+        <div class="prac-card ${c.c}">
+          <div class="prac-name">${c.n}</div>
+          <div class="prac-meta">Day / Date: <span>${c.d}</span></div>
+          ${c.t ? `<div class="prac-meta">Time Slot: <span>${c.t}</span></div>` : ''}
+        </div>`;
+    });
+  }
+  panel.classList.add('visible');
+  setTimeout(() => {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderDateWeekBanner();
+  ['regInput','weekInput'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkSchedule();
+    });
+  });
+});
+</script>
+</body>
+</html>
